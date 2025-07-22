@@ -164,6 +164,7 @@ impl Server {
             config.ipv6_first,
             config.dns_cache_size,
             context.connect_opts_ref(),
+            config.dns_bypass_outbound_interface,
         )
         .await
         {

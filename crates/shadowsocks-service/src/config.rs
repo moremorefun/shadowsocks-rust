@@ -178,6 +178,9 @@ struct SSConfig {
     dns_cache_size: Option<usize>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    dns_bypass_outbound_interface: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     mode: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1323,6 +1326,10 @@ pub struct Config {
     /// - `quad9`, `quad9_tls`
     pub dns: DnsConfig,
     pub dns_cache_size: Option<usize>,
+    /// DNS bypass outbound bind interface
+    ///
+    /// If `true`, DNS queries will not be bound to the `outbound_bind_interface`
+    pub dns_bypass_outbound_interface: bool,
     /// Uses IPv6 addresses first
     ///
     /// Set to `true` if you want to query IPv6 addresses before IPv4
@@ -1486,6 +1493,7 @@ impl Config {
 
             dns: DnsConfig::default(),
             dns_cache_size: None,
+            dns_bypass_outbound_interface: false,
             ipv6_first: false,
             ipv6_only: false,
 
@@ -2309,6 +2317,9 @@ impl Config {
                 None => nconfig.dns = DnsConfig::System,
             }
             nconfig.dns_cache_size = config.dns_cache_size;
+            if let Some(bypass) = config.dns_bypass_outbound_interface {
+                nconfig.dns_bypass_outbound_interface = bypass;
+            }
         }
 
         // TCP nodelay

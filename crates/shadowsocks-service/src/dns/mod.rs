@@ -13,7 +13,17 @@ pub async fn build_dns_resolver(
     ipv6_first: bool,
     dns_cache_size: Option<usize>,
     connect_opts: &ConnectOpts,
+    dns_bypass_outbound_interface: bool,
 ) -> Option<DnsResolver> {
+    // Create modified ConnectOpts for DNS if bypass is enabled
+    let dns_connect_opts = if dns_bypass_outbound_interface {
+        let mut opts = connect_opts.clone();
+        opts.bind_interface = None;
+        opts
+    } else {
+        connect_opts.clone()
+    };
+
     match dns {
         DnsConfig::System => {
             #[cfg(feature = "hickory-dns")]
@@ -37,7 +47,7 @@ pub async fn build_dns_resolver(
                         opts_opt = Some(opts);
                     }
 
-                    return match DnsResolver::hickory_dns_system_resolver(opts_opt, connect_opts.clone()).await {
+                    return match DnsResolver::hickory_dns_system_resolver(opts_opt, dns_connect_opts).await {
                         Ok(r) => Some(r),
                         Err(err) => {
                             warn!(
@@ -63,7 +73,7 @@ pub async fn build_dns_resolver(
                 opts_opt = Some(opts);
             }
 
-            match DnsResolver::hickory_resolver(dns, opts_opt, connect_opts.clone()).await {
+            match DnsResolver::hickory_resolver(dns, opts_opt, dns_connect_opts).await {
                 Ok(r) => Some(r),
                 Err(err) => {
                     use log::warn;
@@ -86,7 +96,7 @@ pub async fn build_dns_resolver(
             let mut resolver = LocalDnsResolver::new(ns);
             resolver.set_mode(Mode::TcpAndUdp);
             resolver.set_ipv6_first(ipv6_first);
-            resolver.set_connect_opts(connect_opts.clone());
+            resolver.set_connect_opts(dns_connect_opts);
 
             Some(DnsResolver::custom_resolver(resolver))
         }

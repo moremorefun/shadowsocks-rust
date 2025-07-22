@@ -70,7 +70,7 @@ pub async fn run(config: Config) -> io::Result<()> {
     accept_opts.udp.mtu = config.udp_mtu;
 
     if let Some(resolver) =
-        build_dns_resolver(config.dns, config.ipv6_first, config.dns_cache_size, &connect_opts).await
+        build_dns_resolver(config.dns, config.ipv6_first, config.dns_cache_size, &connect_opts, config.dns_bypass_outbound_interface).await
     {
         manager_builder.set_dns_resolver(Arc::new(resolver));
     }
